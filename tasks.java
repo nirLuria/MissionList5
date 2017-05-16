@@ -1,28 +1,30 @@
-package com.example.nluria.missionlist;
+package com.example.nluria.missionList;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import java.util.ArrayList;
-import java.util.List;
+
 import android.widget.ScrollView;
 import android.widget.LinearLayout;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 
 public class tasks extends AppCompatActivity
@@ -31,9 +33,13 @@ public class tasks extends AppCompatActivity
     String nameOfGroup;
     Button btnAddTask;
     EditText input;
-    List<String> tasksArray = new ArrayList<String>();
     private static Button delete_tasks_button;
-
+    FireBaseHelper fireDb;
+    private DatabaseReference mRootRef;
+    private static ListView listView;
+ //   private ArrayList<String> tasksArray = new ArrayList<String>();
+    private ArrayList<String> tasksArray;
+    private String myPhoneNumber;
 
 
     protected void onCreate(Bundle savedInstanceState)
@@ -41,18 +47,39 @@ public class tasks extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tasks);
         myDb = new DataBaseHelper(this);
+        fireDb= new FireBaseHelper();
 
+        // get my phone number
+     //   TelephonyManager tMgr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+     //   myPhoneNumber = tMgr.getSimSerialNumber();
+
+
+
+        Intent intent = getIntent();
+        myPhoneNumber= intent.getStringExtra("myPhoneNumber");
+        fireDb.initialize(myPhoneNumber);
+
+        System.out.println("myPhoneNumber is       ___"+ myPhoneNumber);
+        System.out.println("nirnir");
 
         //print title of group on screen.
-        Intent intent = getIntent();
-        nameOfGroup= intent.getStringExtra("name");
+        nameOfGroup= intent.getStringExtra("nameOfGroup");
         TextView title= (TextView) findViewById(R.id.title);
         title.setText(nameOfGroup);
     //    title.setTextSize(100);
 
+
+        //
+   //     TextView number = (TextView)findViewById(R.id.myPhoneNumText2);
+
+     //   number.setText("1:"+myPhoneNumber+":22");
+
+        //
+
         addNewTask();
-        tasksView();
-     //   deleteTasksOfGroupClickListener();
+        getTasks();
+        deleteTasksOfGroupClickListener();
+        taskMenu();
 
      }
 
@@ -75,6 +102,7 @@ public class tasks extends AppCompatActivity
         //create alert dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add a new task:");
+
         builder.setMessage("");
         input= new EditText(this);
         builder.setView(input);
@@ -91,6 +119,20 @@ public class tasks extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialogInterface, int i)
             {
+                //empty title.
+                if (input.getText().toString().equals(""))
+                {
+                    emptyTaskInsertedAlertDialog();
+                }
+                else
+                {
+             //       fireDb.addNewTask(input.getText().toString(),nameOfGroup,nameOfGroupFullName, tasks2.this, input, true);
+                    input.setText("");
+
+
+
+                }
+              /*
                 boolean isInserted = myDb.insertNewTask(input.getText().toString(),nameOfGroup);
                 System.out.println(" isInserted is: " + isInserted);
 
@@ -105,18 +147,25 @@ public class tasks extends AppCompatActivity
 
                 }
                 input.setText("");
+                */
             }
         });
 
 
         final AlertDialog alertDialog= builder.create();
 
+        buttonClickAction(alertDialog);
 
+    }
+
+    public void buttonClickAction(final AlertDialog a)
+    {
+        AlertDialog alertDialog=a;
         btnAddTask= (Button)findViewById(R.id.Add_btn);
         btnAddTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                alertDialog.show();
+                a.show();
             }
         });
     }
@@ -158,6 +207,142 @@ public class tasks extends AppCompatActivity
     }
 
 
+    public void getTasks()
+    {
+        String group=myPhoneNumber+"_"+nameOfGroup;
+        mRootRef = FirebaseDatabase.getInstance()
+                .getReferenceFromUrl("https://todo-ba2f4.firebaseio.com/groups/"+group);
+
+
+        listView = (ListView)findViewById(R.id.tasksListView);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,R.layout.list_view_style, tasksArray );
+
+        listView.setAdapter(adapter);
+
+        mRootRef.addChildEventListener(new ChildEventListener()
+        {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s)
+            {
+                if (dataSnapshot.getKey().equals("tasks"))
+                {
+                    System.out.println("dataSnapshot: "+dataSnapshot);
+                    for (DataSnapshot child: dataSnapshot.getChildren())
+                    {
+                        String value = child.getKey().toString();
+                        tasksArray.add(value);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+
+    public void taskMenu()
+    {
+        listView = (ListView)findViewById(R.id.tasksListView);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,R.layout.list_view_style, tasksArray );
+        listView.setAdapter(adapter);
+
+        //go to tasks of group.
+        listView.setOnItemClickListener
+                (
+                        new AdapterView.OnItemClickListener()
+                        {
+                            @Override
+                            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
+                            {
+                                final int p=position;
+                                AlertDialog.Builder builder = new AlertDialog.Builder(tasks.this);
+
+                                builder.setTitle("");
+                                builder.setItems(new CharSequence[]
+                                                {"Delete Task","Cancel"},
+                                        new DialogInterface.OnClickListener()
+                                        {
+                                            public void onClick(DialogInterface dialogInterface, int which)
+                                            {
+                                                String task = (String)listView.getItemAtPosition(p);
+                                                // The 'which' argument contains the index position
+                                                // of the selected item
+                                                switch (which)
+                                                {
+
+                                                    case 0:
+                                                        deleteTask(task, nameOfGroup);
+                                                        finish();
+                                                        refreshActivity();
+                                                        break;
+                                                    case 1:
+                                                        break;
+
+
+                                                }
+                                            }
+                                        });
+                                builder.create().show();
+
+
+                                AlertDialog alert = builder.create();
+                                alert.setTitle("Menu");
+                                alert.show();
+                                alert.dismiss();
+                            }
+                        }
+                );
+    }
+
+
+    public void deleteTask(String task, String nameOfGroup)
+    {
+
+        mRootRef = FirebaseDatabase.getInstance()
+                .getReferenceFromUrl("https://todo-ba2f4.firebaseio.com/groups/"+myPhoneNumber+"_"+nameOfGroup);
+        Query query = mRootRef.child("tasks").orderByKey().equalTo(task);
+
+        query.addListenerForSingleValueEvent(new ValueEventListener()
+        {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot appleSnapshot: dataSnapshot.getChildren())
+                {
+                    appleSnapshot.getRef().removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //  Log.e(TAG, "onCancelled", databaseError.toException());
+            }
+        });
+
+
+
+
+    }
+/*
     public void tasksView()
     {
         Cursor res = myDb.getTasks(nameOfGroup);
@@ -186,7 +371,7 @@ public class tasks extends AppCompatActivity
             TextView tv = new TextView(this);
             ll.addView(tv);
 */
-
+/*
 
             StringBuffer buffer = new StringBuffer();
             int number=1;
@@ -235,7 +420,7 @@ public class tasks extends AppCompatActivity
      //       this.setContentView(sv);
         }
     }
-
+*/
 
     public void deleteAllTasksMessage()
     {
@@ -251,7 +436,11 @@ public class tasks extends AppCompatActivity
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        //delete all groups.
+
+
+                        //delete all tasks in group.
+                        fireDb.deleteAllTasksOfGroup(tasks.this, nameOfGroup);
+                        /*
                         boolean isDeleted = myDb.deleteAllTasksOfGroup(nameOfGroup);
                         if (isDeleted == true)
                         {
@@ -262,6 +451,7 @@ public class tasks extends AppCompatActivity
                         {
                             Toast.makeText(tasks.this, "didn't deleted", Toast.LENGTH_LONG).show();
                         }
+                        */
                         //  finish();
                     }
                 });
@@ -315,4 +505,25 @@ public class tasks extends AppCompatActivity
         startActivity(intent);
     }
 
+
+
+    public void emptyTaskInsertedAlertDialog()
+    {
+        AlertDialog.Builder alert_builder = new AlertDialog.Builder(tasks.this);
+        alert_builder.setMessage("Please choose another task.")
+                .setCancelable(false)
+                .setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                     }
+                });
+        AlertDialog alert = alert_builder.create();
+        alert.setTitle("The task can't be blank!");
+        alert.show();
+    }
+
+
 }
+
+

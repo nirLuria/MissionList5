@@ -1,4 +1,4 @@
-package com.example.nluria.missionlist;
+package com.example.nluria.missionList;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -247,7 +247,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
                                         // of the selected item
                                         switch (which) {
                                             case 0:
-                                                Intent intent = new Intent("com.example.nluria.missionlist.tasks");
+                                                Intent intent = new Intent("com.example.nluria.feb.tasks");
 
                                                 //pass the name of the group to the next activity.
                                                 intent.putExtra("name", grp);
