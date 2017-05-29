@@ -588,4 +588,9 @@ public class viewGroups extends AppCompatActivity
     }
 
 
+    public void onBackPressed()
+    {
+        startActivity(new Intent(this, MainActivity.class));
+    }
+
 }

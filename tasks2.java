@@ -46,9 +46,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.TextView;
-import android.view.KeyEvent;
+
 
 import java.util.ArrayList;
 
@@ -151,7 +149,7 @@ public class tasks2 extends AppCompatActivity
             case R.id.action_reAdd:
                 ArrayList<String> tempArray = new ArrayList<String>();
                 tempArray=completedTasksArray;
-                fireDb.addNewTask("junk",nameOfGroup,nameOfGroupFullName, tasks2.this, input, true);
+          //      fireDb.addNewTask("junk",nameOfGroup,nameOfGroupFullName, tasks2.this, input, true);
                 fireDb.deleteAllCompletedTasksOfGroup(tasks2.this, nameOfGroup);
 
                 for (int i=0; i<tempArray.size(); i++)
@@ -159,7 +157,7 @@ public class tasks2 extends AppCompatActivity
                     System.out.println("item "+i+" is "+tempArray.get(i));
                     fireDb.addNewTask(tempArray.get(i),nameOfGroup,nameOfGroupFullName, tasks2.this, input, true);
                 }
-                deleteTask("junk",  nameOfGroup);
+           //     deleteTask("junk",  nameOfGroup);
            //     deleteCompletedTask("", nameOfGroup);
 
             //    Toast.makeText(getApplicationContext(), "action_reAdd", Toast.LENGTH_SHORT).show();
@@ -175,7 +173,7 @@ public class tasks2 extends AppCompatActivity
     {
         //create alert dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Add a new task:");
+        builder.setTitle("הוסף מטלה חדשה:");
 
         builder.setMessage("");
         input= new EditText(this);
@@ -187,14 +185,14 @@ public class tasks2 extends AppCompatActivity
         builder.setView(input);
 
         //set negative button.
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("ביטול", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
             }
         });
         //set positive button.
-        builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("אישור", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i)
             {
@@ -266,8 +264,12 @@ public class tasks2 extends AppCompatActivity
                         System.out.println("child: "+child);
 
                         String value = child.getKey().toString();
-                        tasksArray.add(value);
-                        adapter.notifyDataSetChanged();
+                        if (!value.equals("junk"))
+                        {
+                            tasksArray.add(value);
+                            adapter.notifyDataSetChanged();
+                        }
+
                     }
 
                 }
@@ -333,6 +335,10 @@ public class tasks2 extends AppCompatActivity
     }
 
 
+    public void onBackPressed()
+    {
+        startActivity(new Intent(this, viewGroups.class));
+    }
 
     public void getCompletedTasks()
     {

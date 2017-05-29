@@ -232,13 +232,18 @@ public class FireBaseHelper extends AppCompatActivity
                 //write the data.
                 else
                 {
+                    //add junk task.
+                    Map<String, String> userData = new HashMap<String, String>();
+                    userData.put("junk", "1");
+                    DatabaseReference mRootY = mRootX.child("tasks");
+                    mRootY.setValue(userData);
 
                     //tasks.
-                    Map<String, String> userData = new HashMap<String, String>();
                     userData.put(data, "1");
-                    DatabaseReference mRootY = mRootX.child("tasks");
-                    System.out.println("userData is: "+userData+"!");
+                    mRootY = mRootX.child("tasks");
                     mRootY.setValue(userData);
+
+
 
                     messageAlertDialog("מטלה חדשה התווספה בהצלחה!", context);
 

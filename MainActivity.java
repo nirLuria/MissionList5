@@ -46,7 +46,6 @@ import java.util.Random;
 
 public class MainActivity extends AbsRuntimePermissions
 {
-
     private static DataBaseHelper myDb;
     private static Button exit_button;
     private static Button view_groups_button;
@@ -151,7 +150,8 @@ public class MainActivity extends AbsRuntimePermissions
         switch(item.getItemId())
         {
             case R.id.info_id:
-                Toast.makeText(getApplicationContext(), "info icon is selected", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent("com.example.nluria.missionList.Info");
+                startActivity(intent);
             case R.id.action_settings:
                 Toast.makeText(getApplicationContext(), "setting icon is selected", Toast.LENGTH_SHORT).show();
             default:
@@ -531,5 +531,10 @@ public class MainActivity extends AbsRuntimePermissions
         Intent intent = getIntent();
         finish();
         startActivity(intent);
+    }
+
+    public void onBackPressed()
+    {
+        //there is no way back from the main activity.
     }
 }
